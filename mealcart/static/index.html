@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f6b3b">
+  <title>MealCart</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🥕%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="brand">Meal<span>Cart</span></h1>
+    <button id="new-plan" class="link-btn" hidden>New plan</button>
+  </header>
+
+  <main>
+    <!-- 1. Planning form -->
+    <section id="view-form" class="view">
+      <p class="lede">Tell us about your week. We'll plan the meals, write the recipes, and build one grocery list you can send to your store.</p>
+      <form id="plan-form" class="card">
+        <div class="row">
+          <label>People
+            <input type="number" name="people" min="1" max="12" value="2" required>
+          </label>
+          <label>Days
+            <input type="number" name="days" min="1" max="7" value="7" required>
+          </label>
+        </div>
+
+        <fieldset>
+          <legend>Meals to plan</legend>
+          <div class="chips">
+            <label class="chip"><input type="checkbox" name="meals" value="breakfast"><span>Breakfast</span></label>
+            <label class="chip"><input type="checkbox" name="meals" value="lunch"><span>Lunch</span></label>
+            <label class="chip"><input type="checkbox" name="meals" value="dinner" checked><span>Dinner</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Budget</legend>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="budget" value="budget"><span>Thrifty</span></label>
+            <label class="chip"><input type="radio" name="budget" value="moderate" checked><span>Moderate</span></label>
+            <label class="chip"><input type="radio" name="budget" value="premium"><span>Splurge</span></label>
+          </div>
+        </fieldset>
+
+        <label>Diet <input name="diet" placeholder="e.g. vegetarian, high-protein, low-carb"></label>
+        <label>Allergies <input name="allergies" placeholder="e.g. peanuts, shellfish"></label>
+        <label>Dislikes <input name="dislikes" placeholder="e.g. mushrooms, cilantro"></label>
+        <label>Cuisines you love <input name="cuisines" placeholder="e.g. Mexican, Thai, Italian"></label>
+        <label>Max cooking time per meal
+          <select name="max_cook_minutes">
+            <option value="">No limit</option>
+            <option value="20">20 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+          </select>
+        </label>
+        <label>Already have at home <textarea name="pantry" rows="2" placeholder="e.g. rice, eggs, frozen peas"></textarea></label>
+        <label>Anything else? <textarea name="notes" rows="2" placeholder="e.g. kids are picky, Friday is pizza night"></textarea></label>
+
+        <p id="form-error" class="error" role="alert" hidden></p>
+        <button type="submit" class="primary">Plan my week</button>
+      </form>
+    </section>
+
+    <!-- 2. Loading -->
+    <section id="view-loading" class="view" hidden>
+      <div class="loading card">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="loading-title">Planning your week…</p>
+        <p id="loading-tip" class="muted">Picking recipes that share ingredients</p>
+      </div>
+    </section>
+
+    <!-- 3. Plan -->
+    <section id="view-plan" class="view" hidden>
+      <div class="plan-head">
+        <h2 id="plan-title"></h2>
+        <p id="plan-summary" class="muted"></p>
+      </div>
+
+      <nav class="tabs" role="tablist">
+        <button role="tab" class="tab" data-tab="week" aria-selected="true">Week</button>
+        <button role="tab" class="tab" data-tab="groceries" aria-selected="false">Groceries <span id="grocery-count" class="badge"></span></button>
+      </nav>
+
+      <div id="tab-week" class="tab-panel"></div>
+
+      <div id="tab-groceries" class="tab-panel" hidden>
+        <p class="muted small">Uncheck anything you already have. Only checked items get sent.</p>
+        <div id="grocery-list"></div>
+        <p id="staples" class="muted small"></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky action bar for the grocery tab -->
+  <div id="actions" class="actions" hidden>
+    <p id="action-error" class="error" role="alert" hidden></p>
+    <button id="send-instacart" class="primary">Order with Instacart</button>
+    <div class="secondary-actions">
+      <button id="copy-list" class="ghost">Copy list</button>
+      <button id="share-list" class="ghost">Share</button>
+    </div>
+  </div>
+
+  <!-- Recipe dialog -->
+  <dialog id="recipe-dialog">
+    <article>
+      <header class="dialog-head">
+        <h3 id="recipe-name"></h3>
+        <button class="link-btn" id="close-recipe" aria-label="Close">✕</button>
+      </header>
+      <p id="recipe-meta" class="muted small"></p>
+      <p id="recipe-desc"></p>
+      <h4>Ingredients</h4>
+      <ul id="recipe-ingredients"></ul>
+      <h4>Steps</h4>
+      <ol id="recipe-steps"></ol>
+    </article>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

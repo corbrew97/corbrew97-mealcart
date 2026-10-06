@@ -1,0 +1,35 @@
+{
+  "title": "Cozy Weeknight Dinners for 2",
+  "summary": "Three cook-once, eat-twice dinners plus a quick pasta night. Chicken thighs, spinach and lemons carry across several meals so nothing goes to waste.",
+  "recipes": [
+    {"id": "r1", "name": "Lemon-Garlic Sheet Pan Chicken", "description": "Crispy chicken thighs roasted with potatoes and green beans.", "servings": 4, "prep_minutes": 15, "cook_minutes": 35,
+     "ingredients": [{"name": "boneless skinless chicken thighs", "quantity": 2, "unit": "pound"}, {"name": "baby potatoes", "quantity": 1.5, "unit": "pound"}, {"name": "green beans", "quantity": 12, "unit": "ounce"}, {"name": "lemon", "quantity": 2, "unit": "each"}, {"name": "garlic", "quantity": 4, "unit": "clove"}],
+     "steps": ["Heat oven to 425°F.", "Halve the potatoes and toss with oil, salt and pepper on a sheet pan. Roast 10 minutes.", "Add chicken, green beans, sliced lemon and smashed garlic. Roast 25 minutes more until the chicken reaches 165°F."]},
+    {"id": "r2", "name": "Chicken & Spinach Grain Bowls", "description": "Leftover chicken over rice with garlicky spinach and a lemon-yogurt sauce.", "servings": 2, "prep_minutes": 10, "cook_minutes": 15,
+     "ingredients": [{"name": "baby spinach", "quantity": 5, "unit": "ounce"}, {"name": "plain greek yogurt", "quantity": 0.5, "unit": "cup"}, {"name": "jasmine rice", "quantity": 1, "unit": "cup"}],
+     "steps": ["Cook the rice.", "Wilt spinach with a little garlic and oil.", "Stir lemon juice and salt into the yogurt. Assemble bowls with sliced leftover chicken."]},
+    {"id": "r3", "name": "Creamy Tomato Spinach Pasta", "description": "A 20-minute pantry pasta with a parmesan finish.", "servings": 2, "prep_minutes": 5, "cook_minutes": 15,
+     "ingredients": [{"name": "penne", "quantity": 8, "unit": "ounce"}, {"name": "crushed tomatoes", "quantity": 1, "unit": "can"}, {"name": "heavy cream", "quantity": 0.25, "unit": "cup"}, {"name": "baby spinach", "quantity": 5, "unit": "ounce"}, {"name": "parmesan", "quantity": 0.5, "unit": "cup"}],
+     "steps": ["Boil the pasta.", "Simmer tomatoes with garlic for 8 minutes, then stir in cream and spinach.", "Toss with pasta and parmesan."]}
+  ],
+  "schedule": [
+    {"day": "Day 1", "meal_type": "dinner", "recipe_id": "r1", "is_leftovers": false},
+    {"day": "Day 2", "meal_type": "dinner", "recipe_id": "r2", "is_leftovers": true},
+    {"day": "Day 3", "meal_type": "dinner", "recipe_id": "r3", "is_leftovers": false}
+  ],
+  "grocery_list": [
+    {"name": "boneless skinless chicken thighs", "display_text": "2 lb boneless skinless chicken thighs", "quantity": 2, "unit": "pound", "category": "Meat & Seafood", "recipe_ids": ["r1", "r2"]},
+    {"name": "baby potatoes", "display_text": "1.5 lb bag baby potatoes", "quantity": 1, "unit": "bag", "category": "Produce", "recipe_ids": ["r1"]},
+    {"name": "green beans", "display_text": "12 oz green beans", "quantity": 12, "unit": "ounce", "category": "Produce", "recipe_ids": ["r1"]},
+    {"name": "lemon", "display_text": "3 lemons", "quantity": 3, "unit": "each", "category": "Produce", "recipe_ids": ["r1", "r2"]},
+    {"name": "garlic", "display_text": "1 head garlic", "quantity": 1, "unit": "head", "category": "Produce", "recipe_ids": ["r1", "r2", "r3"]},
+    {"name": "baby spinach", "display_text": "10 oz baby spinach", "quantity": 10, "unit": "ounce", "category": "Produce", "recipe_ids": ["r2", "r3"]},
+    {"name": "plain greek yogurt", "display_text": "1 small container plain Greek yogurt", "quantity": 1, "unit": "container", "category": "Dairy & Eggs", "recipe_ids": ["r2"]},
+    {"name": "heavy cream", "display_text": "1 half-pint heavy cream", "quantity": 1, "unit": "container", "category": "Dairy & Eggs", "recipe_ids": ["r3"]},
+    {"name": "parmesan cheese", "display_text": "1 wedge parmesan", "quantity": 1, "unit": "package", "category": "Dairy & Eggs", "recipe_ids": ["r3"]},
+    {"name": "jasmine rice", "display_text": "1 bag jasmine rice", "quantity": 1, "unit": "bag", "category": "Pantry", "recipe_ids": ["r2"]},
+    {"name": "penne pasta", "display_text": "1 box penne", "quantity": 1, "unit": "box", "category": "Pantry", "recipe_ids": ["r3"]},
+    {"name": "crushed tomatoes", "display_text": "1 (28 oz) can crushed tomatoes", "quantity": 1, "unit": "can", "category": "Pantry", "recipe_ids": ["r3"]}
+  ],
+  "pantry_staples_assumed": ["salt", "black pepper", "olive oil"]
+}
