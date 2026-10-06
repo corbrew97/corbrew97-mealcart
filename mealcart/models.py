@@ -56,6 +56,7 @@ class PlanRequest(BaseModel):
     budget: Literal["budget", "moderate", "premium"] = "moderate"
     pantry: str = Field("", max_length=1000, description="Things already at home")
     notes: str = Field("", max_length=1000)
+    favorites: list["Recipe"] = Field(default_factory=list, max_length=10)
 
 
 # --- Claude's structured output -------------------------------------------
@@ -101,6 +102,25 @@ class MealPlan(BaseModel):
     schedule: list[ScheduledMeal]
     grocery_list: list[GroceryItem]
     pantry_staples_assumed: list[str]
+
+
+class SwapResult(BaseModel):
+    """Claude's output when replacing one recipe in an existing plan."""
+
+    recipe: Recipe
+    summary: str
+    grocery_list: list[GroceryItem]
+    pantry_staples_assumed: list[str]
+
+
+PlanRequest.model_rebuild()
+
+
+class SwapRequest(BaseModel):
+    plan: MealPlan
+    recipe_id: str
+    reason: str = Field("", max_length=300)
+    preferences: PlanRequest = Field(default_factory=PlanRequest)
 
 
 # --- Instacart handoff ----------------------------------------------------

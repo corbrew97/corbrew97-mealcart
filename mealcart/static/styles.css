@@ -107,6 +107,15 @@ legend { font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
 }
 .link-btn { background: none; border: 0; color: var(--accent); font-weight: 600; padding: 4px; }
 
+.check-row { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.check-row input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+.recipe-actions { display: flex; gap: 8px; margin: 12px 0 4px; }
+.recipe-actions .primary { flex: 1; width: auto; padding: 10px; }
+#toggle-favorite[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.swap-form { display: grid; gap: 8px; margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--bg); }
+.empty { text-align: center; padding: 32px 16px; }
+
 /* Loading */
 .loading { text-align: center; padding: 40px 16px; margin-top: 24px; }
 .loading-title { font-weight: 700; font-size: 1.1rem; margin: 16px 0 4px; }
@@ -121,7 +130,7 @@ legend { font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
 .plan-head { margin: 4px 0 14px; }
 .plan-head h2 { font-size: 1.4rem; margin-bottom: 6px; }
 .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
-.tab { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 8px; border-radius: 9px; font-weight: 600; }
+.tab { flex: 1; white-space: nowrap; border: 0; background: transparent; color: var(--muted); padding: 8px; border-radius: 9px; font-weight: 600; }
 .tab[aria-selected="true"] { background: var(--accent-soft); color: var(--text); }
 .badge { font-size: .75rem; background: var(--accent); color: var(--accent-text); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
 

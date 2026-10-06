@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2f6b3b">
   <title>MealCart</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🥕%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="/static/icon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="MealCart">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -62,6 +66,11 @@
         <label>Already have at home <textarea name="pantry" rows="2" placeholder="e.g. rice, eggs, frozen peas"></textarea></label>
         <label>Anything else? <textarea name="notes" rows="2" placeholder="e.g. kids are picky, Friday is pizza night"></textarea></label>
 
+        <label id="use-favorites-row" class="check-row" hidden>
+          <input type="checkbox" name="use_favorites" checked>
+          <span>Work in some of my saved recipes (<span id="favorites-count">0</span>)</span>
+        </label>
+
         <p id="form-error" class="error" role="alert" hidden></p>
         <button type="submit" class="primary">Plan my week</button>
       </form>
@@ -86,6 +95,7 @@
       <nav class="tabs" role="tablist">
         <button role="tab" class="tab" data-tab="week" aria-selected="true">Week</button>
         <button role="tab" class="tab" data-tab="groceries" aria-selected="false">Groceries <span id="grocery-count" class="badge"></span></button>
+        <button role="tab" class="tab" data-tab="saved" aria-selected="false">Saved</button>
       </nav>
 
       <div id="tab-week" class="tab-panel"></div>
@@ -95,6 +105,8 @@
         <div id="grocery-list"></div>
         <p id="staples" class="muted small"></p>
       </div>
+
+      <div id="tab-saved" class="tab-panel" hidden></div>
     </section>
   </main>
 
@@ -116,6 +128,20 @@
         <button class="link-btn" id="close-recipe" aria-label="Close">✕</button>
       </header>
       <p id="recipe-meta" class="muted small"></p>
+      <div class="recipe-actions">
+        <button type="button" id="toggle-favorite" class="ghost" aria-pressed="false">♡ Save</button>
+        <button type="button" id="start-swap" class="ghost">⇄ Swap meal</button>
+      </div>
+      <form id="swap-form" class="swap-form" hidden>
+        <label><span>What would you like instead? <span class="muted">(optional)</span></span>
+          <input name="reason" placeholder="e.g. something vegetarian, no oven, fish">
+        </label>
+        <p id="swap-error" class="error" role="alert" hidden></p>
+        <div class="recipe-actions">
+          <button type="button" id="cancel-swap" class="ghost">Cancel</button>
+          <button type="submit" id="confirm-swap" class="primary">Swap it</button>
+        </div>
+      </form>
       <p id="recipe-desc"></p>
       <h4>Ingredients</h4>
       <ul id="recipe-ingredients"></ul>

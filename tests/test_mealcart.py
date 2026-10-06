@@ -150,3 +150,79 @@ def test_plan_endpoint_maps_errors(monkeypatch):
 def test_config_reports_instacart(monkeypatch):
     monkeypatch.delenv("INSTACART_API_KEY", raising=False)
     assert client.get("/api/config").json() == {"instacart_enabled": False}
+
+
+# --- favorites & swap ----------------------------------------------------
+
+
+def test_favorites_are_offered_to_claude():
+    req = PlanRequest(favorites=[SAMPLE.recipes[0]])
+    prompt = planner.build_user_prompt(req)
+    assert "saved as favorites" in prompt
+    assert SAMPLE.recipes[0].name in prompt
+
+
+def swap_result(name="Mushroom Risotto"):
+    from mealcart.models import SwapResult
+
+    return SwapResult(
+        recipe=SAMPLE.recipes[2].model_copy(update={"id": "whatever", "name": name}),
+        summary="New summary",
+        grocery_list=SAMPLE.grocery_list[:3],
+        pantry_staples_assumed=["salt"],
+    )
+
+
+def test_swap_replaces_recipe_and_grocery_list():
+    from mealcart.models import SwapRequest, SwapResult
+
+    client, calls = fake_client(parsed=swap_result())
+    req = SwapRequest(plan=SAMPLE, recipe_id="r3", reason="something cozier")
+    plan = asyncio.run(planner.swap_recipe(req, client=client))
+
+    swapped = next(r for r in plan.recipes if r.id == "r3")  # id kept so the schedule still works
+    assert swapped.name == "Mushroom Risotto"
+    assert [r.name for r in plan.recipes[:2]] == [r.name for r in SAMPLE.recipes[:2]]
+    assert plan.grocery_list == SAMPLE.grocery_list[:3]
+    assert plan.summary == "New summary"
+    assert calls[0]["output_format"] is SwapResult
+    prompt = calls[0]["messages"][0]["content"]
+    assert "something cozier" in prompt and "Creamy Tomato Spinach Pasta" in prompt
+
+
+def test_swap_unknown_recipe():
+    from mealcart.models import SwapRequest
+
+    client, _ = fake_client(parsed=swap_result())
+    with pytest.raises(planner.PlannerError):
+        asyncio.run(planner.swap_recipe(SwapRequest(plan=SAMPLE, recipe_id="zzz"), client=client))
+
+
+def test_swap_endpoint_demo_mode(monkeypatch):
+    monkeypatch.setenv("MEALCART_DEMO", "1")
+    resp = client.post("/api/swap", json={"plan": SAMPLE.model_dump(), "recipe_id": "r1"})
+    assert resp.status_code == 200
+    recipe = next(r for r in resp.json()["recipes"] if r["id"] == "r1")
+    assert recipe["name"] == planner.DEMO_SWAP.name
+
+
+# --- password gate -------------------------------------------------------
+
+
+def test_password_gate(monkeypatch):
+    monkeypatch.setenv("MEALCART_PASSWORD", "hunter2")
+    c = TestClient(app)
+    assert c.get("/", follow_redirects=False).headers["location"] == "/login"
+    assert c.get("/api/config").status_code == 401
+    assert c.get("/static/styles.css").status_code == 200
+    assert c.get("/healthz").status_code == 200
+
+    assert c.post("/login", data={"password": "nope"}, follow_redirects=False).status_code == 401
+    assert c.post("/login", data={"password": "hunter2"}, follow_redirects=False).status_code == 303
+    assert c.get("/api/config").status_code == 200
+    assert "MealCart" in c.get("/").text
+
+
+def test_no_password_means_open(monkeypatch):
+    monkeypatch.delenv("MEALCART_PASSWORD", raising=False)
+    assert client.get("/login", follow_redirects=False).status_code == 303

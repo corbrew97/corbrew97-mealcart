@@ -58,7 +58,9 @@ async def create_shopping_list_link(
     if base_url is None:
         raise InstacartError(f"INSTACART_ENV must be one of {', '.join(BASE_URLS)}.")
 
-    payload = build_payload(title, items, os.environ.get("MEALCART_PUBLIC_URL"))
+    payload = build_payload(
+        title, items, os.environ.get("MEALCART_PUBLIC_URL") or os.environ.get("RENDER_EXTERNAL_URL")
+    )
     owns_client = http is None
     http = http or httpx.AsyncClient(timeout=30)
     try:

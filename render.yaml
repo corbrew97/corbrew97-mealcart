@@ -1,0 +1,20 @@
+# One-click deploy on Render: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: mealcart
+    runtime: python
+    plan: free
+    buildCommand: pip install .
+    startCommand: uvicorn mealcart.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: MEALCART_PASSWORD
+        sync: false
+      - key: INSTACART_API_KEY
+        sync: false
+      - key: INSTACART_ENV
+        value: development

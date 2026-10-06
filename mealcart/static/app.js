@@ -21,9 +21,11 @@ const el = (tag, props = {}, ...children) => {
   return node;
 };
 
-// state = { plan, checked: {index: bool}, tab }
+// state = { plan, checked: {itemName: bool}, tab, lastRequest, favorites: [recipe] }
 let state = loadState();
+state.favorites ||= [];
 let instacartEnabled = false;
+let currentRecipe = null; // { recipe, fromPlan }
 
 function loadState() {
   try {
@@ -43,6 +45,7 @@ function saveState() {
 
 function showView(name) {
   for (const v of ["form", "loading", "plan"]) $(`#view-${v}`).hidden = v !== name;
+  if (name === "form") updateFavoritesRow();
   $("#new-plan").hidden = name !== "plan";
   $("#actions").hidden = !(name === "plan" && state.tab === "groceries");
   window.scrollTo(0, 0);
@@ -62,6 +65,10 @@ async function apiPost(path, body) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (res.status === 401) {
+    window.location = "/login";
+    throw new Error("Please sign in again.");
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const detail = Array.isArray(data.detail)
@@ -92,6 +99,11 @@ function readForm(form) {
   };
 }
 
+function updateFavoritesRow() {
+  $("#use-favorites-row").hidden = !state.favorites.length;
+  $("#favorites-count").textContent = state.favorites.length;
+}
+
 async function onSubmit(e) {
   e.preventDefault();
   const err = $("#form-error");
@@ -103,13 +115,15 @@ async function onSubmit(e) {
     return;
   }
   state.lastRequest = body;
+  const useFavorites = e.target.elements.use_favorites.checked && state.favorites.length;
+  const request = { ...body, favorites: useFavorites ? state.favorites.slice(0, 10) : [] };
   showView("loading");
   let i = 0;
   const tipTimer = setInterval(() => {
     $("#loading-tip").textContent = LOADING_TIPS[++i % LOADING_TIPS.length];
   }, 4000);
   try {
-    const plan = await apiPost("/api/plan", body);
+    const plan = await apiPost("/api/plan", request);
     state = { ...state, plan, checked: {}, tab: "week" };
     saveState();
     renderPlan();
@@ -140,8 +154,8 @@ function restoreForm() {
 
 // ---------- Plan ----------
 
-function isChecked(i) {
-  return state.checked?.[i] !== false;
+function isChecked(item) {
+  return state.checked?.[item.name] !== false;
 }
 
 function renderPlan() {
@@ -150,6 +164,7 @@ function renderPlan() {
   $("#plan-summary").textContent = plan.summary;
   renderWeek(plan);
   renderGroceries(plan);
+  renderSaved();
   selectTab(state.tab || "week");
 }
 
@@ -175,7 +190,7 @@ function renderWeek(plan) {
           m.is_leftovers ? el("span", { className: "meal-tag", textContent: " · leftovers" }) : ""),
         el("span", { className: "chev", textContent: "›" }),
       );
-      btn.addEventListener("click", () => openRecipe(r));
+      btn.addEventListener("click", () => openRecipe(r, true));
       card.append(btn);
     }
     panel.append(card);
@@ -186,7 +201,93 @@ function formatQty(q) {
   return Number.isInteger(q) ? String(q) : String(Math.round(q * 100) / 100);
 }
 
-function openRecipe(r) {
+function isFavorite(r) {
+  return state.favorites.some((f) => f.name === r.name);
+}
+
+function renderFavoriteButton() {
+  const fav = isFavorite(currentRecipe.recipe);
+  const btn = $("#toggle-favorite");
+  btn.setAttribute("aria-pressed", String(fav));
+  btn.textContent = fav ? "♥ Saved" : "♡ Save";
+}
+
+function toggleFavorite() {
+  const r = currentRecipe.recipe;
+  if (isFavorite(r)) {
+    state.favorites = state.favorites.filter((f) => f.name !== r.name);
+    toast("Removed from saved");
+  } else {
+    state.favorites = [r, ...state.favorites];
+    toast("Saved");
+  }
+  saveState();
+  renderFavoriteButton();
+  renderSaved();
+}
+
+function renderSaved() {
+  const panel = $("#tab-saved");
+  panel.replaceChildren();
+  if (!state.favorites.length) {
+    panel.append(el("div", { className: "card empty muted" },
+      "No saved recipes yet. Open any recipe and tap ♡ Save to keep it for future weeks."));
+    return;
+  }
+  const card = el("div", { className: "card day" });
+  for (const r of state.favorites) {
+    const btn = el("button", { className: "meal", type: "button" },
+      el("span", { className: "meal-name", textContent: r.name }),
+      el("span", { className: "meal-tag", textContent: `${r.prep_minutes + r.cook_minutes} min` }),
+      el("span", { className: "chev", textContent: "›" }));
+    btn.addEventListener("click", () => openRecipe(r, false));
+    card.append(btn);
+  }
+  panel.append(card,
+    el("p", { className: "muted small", textContent: "Saved recipes can be worked into your next plan from the planning form." }));
+}
+
+function closeSwap() {
+  $("#swap-form").hidden = true;
+  $("#swap-form").reset();
+  $("#swap-error").hidden = true;
+  $("#start-swap").hidden = !currentRecipe?.fromPlan;
+}
+
+async function onSwap(e) {
+  e.preventDefault();
+  const btn = $("#confirm-swap");
+  const err = $("#swap-error");
+  err.hidden = true;
+  btn.disabled = true;
+  btn.textContent = "Finding a new meal…";
+  try {
+    const { lastRequest = {} } = state;
+    const plan = await apiPost("/api/swap", {
+      plan: state.plan,
+      recipe_id: currentRecipe.recipe.id,
+      reason: e.target.elements.reason.value,
+      preferences: { ...lastRequest, favorites: [] },
+    });
+    state.plan = plan;
+    saveState();
+    renderPlan();
+    const fresh = plan.recipes.find((r) => r.id === currentRecipe.recipe.id);
+    openRecipe(fresh, true);
+    toast("Meal swapped. Grocery list updated.");
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Swap it";
+  }
+}
+
+function openRecipe(r, fromPlan) {
+  currentRecipe = { recipe: r, fromPlan };
+  renderFavoriteButton();
+  closeSwap();
   $("#recipe-name").textContent = r.name;
   $("#recipe-meta").textContent =
     `Serves ${r.servings} · Prep ${r.prep_minutes} min · Cook ${r.cook_minutes} min`;
@@ -195,25 +296,26 @@ function openRecipe(r) {
     ...r.ingredients.map((i) => el("li", { textContent: [formatQty(i.quantity), i.unit === "each" ? "" : i.unit, i.name].filter(Boolean).join(" ") })),
   );
   $("#recipe-steps").replaceChildren(...r.steps.map((s) => el("li", { textContent: s })));
-  $("#recipe-dialog").showModal();
+  const dialog = $("#recipe-dialog");
+  if (!dialog.open) dialog.showModal();
 }
 
 function renderGroceries(plan) {
   const recipeNames = Object.fromEntries(plan.recipes.map((r) => [r.id, r.name]));
   const groups = new Map(CATEGORY_ORDER.map((c) => [c, []]));
-  plan.grocery_list.forEach((item, i) => {
+  for (const item of plan.grocery_list) {
     if (!groups.has(item.category)) groups.set(item.category, []);
-    groups.get(item.category).push([item, i]);
-  });
+    groups.get(item.category).push(item);
+  }
   const list = $("#grocery-list");
   list.replaceChildren();
   for (const [category, items] of groups) {
     if (!items.length) continue;
     const card = el("div", { className: "card category" }, el("h3", { textContent: category }));
-    for (const [item, i] of items) {
-      const box = el("input", { type: "checkbox", checked: isChecked(i) });
+    for (const item of items) {
+      const box = el("input", { type: "checkbox", checked: isChecked(item) });
       box.addEventListener("change", () => {
-        state.checked = { ...state.checked, [i]: box.checked };
+        state.checked = { ...state.checked, [item.name]: box.checked };
         saveState();
         updateCount();
       });
@@ -231,7 +333,7 @@ function renderGroceries(plan) {
 }
 
 function selectedItems() {
-  return state.plan.grocery_list.filter((_, i) => isChecked(i));
+  return state.plan.grocery_list.filter(isChecked);
 }
 
 function updateCount() {
@@ -244,6 +346,7 @@ function selectTab(tab) {
   document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === tab)));
   $("#tab-week").hidden = tab !== "week";
   $("#tab-groceries").hidden = tab !== "groceries";
+  $("#tab-saved").hidden = tab !== "saved";
   $("#actions").hidden = tab !== "groceries";
 }
 
@@ -304,6 +407,14 @@ $("#new-plan").addEventListener("click", () => {
   showView("form");
 });
 $("#send-instacart").addEventListener("click", sendToInstacart);
+$("#toggle-favorite").addEventListener("click", toggleFavorite);
+$("#start-swap").addEventListener("click", () => {
+  $("#swap-form").hidden = false;
+  $("#start-swap").hidden = true;
+  $("#swap-form").elements.reason.focus();
+});
+$("#cancel-swap").addEventListener("click", closeSwap);
+$("#swap-form").addEventListener("submit", onSwap);
 $("#copy-list").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(listAsText());
